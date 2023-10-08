@@ -2,7 +2,7 @@ import argparse
 from modules import gmailDumper
 from modules import driveDumper
 
-version = "1.0.0"
+version = "1.1.0"
 
 banner = """
 ██████╗ ███████╗██╗     ███████╗ ██████╗  █████╗ ████████╗███████╗
