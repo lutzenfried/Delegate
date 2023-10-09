@@ -110,7 +110,12 @@ def listFolders(service_account_key, impersonate):
         print("Labels (folders) in Gmail:")
         for label in labels:
             print(f"Label Name: {label['name']}")
-    
+
+def save_attachment(filename, file_data):
+    with open(filename, 'wb') as f:
+        f.write(file_data)
+        print(f"===> Downloaded attachment : {filename}")
+
 def downloadAttachments(service_account_key, impersonate):
     # This will download all attachments from the last 200 Gmail emails
     gmail_service = get_gmail_service(service_account_key, impersonate) 
@@ -126,10 +131,10 @@ def downloadAttachments(service_account_key, impersonate):
                 for part in message_data['payload']['parts']:
                     if 'filename' in part:
                         filename = part['filename']
-                        attachment_id = part['body']['attachmentId']
-                        attachment = gmail_service.users().messages().attachments().get(
+                        attachment_id = part['body'].get('attachmentId', None)  # Handle emails without attachmentId
+                        if attachment_id:
+                            attachment = gmail_service.users().messages().attachments().get(
                             userId='me', messageId=message_data['id'], id=attachment_id).execute()
-                        file_data = base64.urlsafe_b64decode(attachment['data'].encode('UTF-8'))
-                        with open(filename, 'wb') as f:
-                            f.write(file_data)
-                            print(f"Downloaded attachment: {filename}")
+                            file_data = base64.urlsafe_b64decode(attachment['data'].encode('UTF-8'))
+                            print(f"+++ Found attachment : {filename}")
+                            save_attachment(filename, file_data)
