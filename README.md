@@ -1,7 +1,7 @@
 # Delegate
 Tool to perform GCP Domain Wide Delegation abuse and access Gmail and Drive data from a compromised Service Account with domain wide delegation permissions configured within Google Workspace.
 
-<img src="./DomainWideDelegation_GCP.png" alt="gcpdelegation" width="800"/>
+<img src="./Images/DomainWideDelegation_GCP.png" alt="gcpdelegation" width="800"/>
 
 ## Delegate tool usage
 ### Gmail usage
@@ -71,3 +71,5 @@ Create shared link on specific file or folder for access
 ```
 python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -f Restricted_documents -t Salary2023.xlsx -l
 ```
+
+<img src="./Images/shared_link_drive.png" alt="sharedlink" width="600"/>
