@@ -4,6 +4,8 @@ from googleapiclient import discovery
 from pprint import pprint
 from bs4 import BeautifulSoup 
 import base64
+from datetime import datetime
+
 
 ### This can be any Gooogle service scope the domain wide delegation have been granted for.
 SCOPES = ["https://mail.google.com/"]
@@ -60,7 +62,10 @@ def readEmails(service_account_key, impersonate):
         # The Body of the message is in Encrypted format. So, we have to decode it.
         # Get the data and decode it with base 64 decoder.
         parts = payload.get('parts')[0]
-        data = parts['body']['data']
+        try:
+            data = parts['body']['data']
+        except:
+            continue
         data = data.replace("-","+").replace("_","/")
         decoded_data = base64.b64decode(data)
         
@@ -110,6 +115,107 @@ def listFolders(service_account_key, impersonate):
         print("Labels (folders) in Gmail:")
         for label in labels:
             print(f"Label Name: {label['name']}")
+            
+def listEmailFromLabel(service_account_key, impersonate, labelName):
+    gmail_service = get_gmail_service(service_account_key, impersonate)
+    label = gmail_service.users().labels().list(userId='me').execute()
+    label_id = None
+    for l in label['labels']:
+        if l['name'] == labelName:
+            label_id = l['id']
+            break
+
+    if label_id is None:
+        print(f"Label '{labelName}' not found.")
+        return
+    
+    results = gmail_service.users().messages().list(userId='me', labelIds=[label_id], maxResults=200).execute()
+    messages = results.get('messages')
+    for msg in messages:
+        # Get the message from its id
+        print("\n======================= Gmail Message id: " + str(msg['id']) + "  =======================")
+        txt = gmail_service.users().messages().get(userId='me', id=msg['id']).execute()
+        
+        payload = txt['payload']
+        headers = payload['headers']
+        # Look for Subject and Sender Email in the headers
+        for d in headers:
+            if d['name'] == 'Subject':
+                subject = d['value']
+            if d['name'] == 'From':
+                sender = d['value']
+        
+        # Printing the subject, sender's email and message
+        print("Subject: ", subject)
+        print("From: ", sender)
+    
+def readFromLabel(service_account_key, impersonate, labelName):
+    gmail_service = get_gmail_service(service_account_key, impersonate)
+    label = gmail_service.users().labels().list(userId='me').execute()
+    label_id = None
+    for l in label['labels']:
+        if l['name'] == labelName:
+            label_id = l['id']
+            break
+
+    if label_id is None:
+        print(f"Label '{labelName}' not found.")
+        return
+
+    # Fetch emails from the specified label
+    results = gmail_service.users().messages().list(userId='me', labelIds=[label_id], maxResults=200).execute()
+    
+    messages = results.get('messages', [])
+
+    if not messages:
+        print(f"No emails found in label '{labelName}'.")
+    else:
+        for message in messages:
+            message_data = gmail_service.users().messages().get(userId='me', id=message['id']).execute()
+            subject = message_data.get('subject', 'No Subject')  # Handle missing 'subject'
+            sender = message_data.get('from', 'Unknown Sender')  # Handle missing 'from'
+            timestamp = int(message_data['internalDate']) / 1000  # Convert to seconds
+            date_time = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+            print(f"Subject: {subject}")
+            print(f"From: {sender}")
+            print(f"Date: {date_time}")  # Display human-readable date and time
+            print("Message Body:")
+            print(message_data['snippet'])  # Display a snippet of the email body
+
+def send_message(service, user_id, message):
+    try:
+        message = service.users().messages().send(userId=user_id, body=message).execute()
+        return message
+    except HttpError as error:
+        raise error
+
+def sendEmail(service_account_key, impersonate, recipient, subject, content):
+    gmail_service = get_gmail_service(service_account_key, impersonate)
+
+    recipient_email = recipient  # Replace with the recipient's email address
+    subject = 'Test Email'
+    message_body = 'This is a test email sent using the Gmail API.'
+
+    try:
+        # Create the email message
+        message = create_message('me', recipient_email, subject, content)
+
+        # Send the email
+        send_message(gmail_service, 'me', message)
+
+        print(f"===> Email sent to {recipient_email} successfully.\n")
+    except HttpError as e:
+        print(f"Email sending failed: {e}")
+
+def create_message(sender, to, subject, message_text):
+    message = {
+        'to': to,
+        'subject': subject,
+        'raw': base64.urlsafe_b64encode(
+            f"From: {sender}\nTo: {to}\nSubject: {subject}\n\n{message_text}".encode("utf-8")
+        ).decode("utf-8")
+    }
+    return message
 
 def save_attachment(filename, file_data):
     with open(filename, 'wb') as f:
