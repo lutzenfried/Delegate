@@ -72,4 +72,4 @@ Create shared link on specific file or folder for access
 python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -f Restricted_documents -t Salary2023.xlsx -l
 ```
 
-<img src="./Images/shared_link_drive.png" alt="sharedlink" width="600"/>
+<img src="./Images/shared_link_drive.png" alt="sharedlink" width="300"/>
