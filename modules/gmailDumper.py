@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import json
 from google.oauth2 import service_account
 from googleapiclient import discovery
@@ -7,25 +9,23 @@ import base64
 from datetime import datetime
 
 
-### This can be any Gooogle service scope the domain wide delegation have been granted for.
+# This can be any Gooogle service scope the domain wide delegation have been granted for.
 SCOPES = ["https://mail.google.com/"]
 
 def get_gmail_service(service_account_key, impersonate):
 
-    ### Reading Google service account credentials from the JSON key file
     service_creds = None
     with open(service_account_key, "r") as f:
         service_creds = json.load(f)
 
-    ### Configure credentials by assigning the specific GSuite scope
+    # Setup the creds by assigning the specific GSuite scope
     credentials = service_account.Credentials.from_service_account_info(service_creds, scopes=SCOPES)
 
-    ### Performing delegation and retrieving credentials of the delegated or targeted user
+    # Perform delegation and retrieve credentials of the delegated user
     delegated_credentials = None
     if credentials:
         delegated_credentials = credentials.with_subject(impersonate)
 
-    ### Creating Google service interface with delegated user credentials to impersonate the targeted user
     service = None
     if delegated_credentials:
         try:
@@ -38,11 +38,11 @@ def readEmails(service_account_key, impersonate):
     # Read user email within Gmail with 200 max results. This can be modified
     gmail_service = get_gmail_service(service_account_key, impersonate)
 
-    ### Get user's GMAIL Messages list: 
+    # Get user's GMAIL Messages list: 
     result = gmail_service.users().messages().list(maxResults=200, userId='me').execute()
     messages = result.get('messages')
 
-    ### Get user's GMAIL Messages content and formatting:
+    # Get user's GMAIL Messages content and formatting:
     for msg in messages:
         # Get the message from its id
         print("\n======================= Message : " + str(msg['id']) + "  =======================")
@@ -69,8 +69,7 @@ def readEmails(service_account_key, impersonate):
         data = data.replace("-","+").replace("_","/")
         decoded_data = base64.b64decode(data)
         
-        # Now, the data obtained is in lxml. So, we will parse
-        # it with BeautifulSoup library
+        # Now, the data obtained is in lxml. So, we will parse it with BeautifulSoup library
         soup = BeautifulSoup(decoded_data , "lxml")
         body = soup.body()
         
@@ -223,6 +222,7 @@ def save_attachment(filename, file_data):
         print(f"===> Downloaded attachment : {filename}")
 
 def downloadAttachments(service_account_key, impersonate):
+    
     # This will download all attachments from the last 200 Gmail emails
     gmail_service = get_gmail_service(service_account_key, impersonate) 
     results = gmail_service.users().messages().list(userId='me', maxResults=200).execute()

@@ -1,8 +1,10 @@
+#!/usr/bin/env python
+
 import argparse
 from modules import gmailDumper
 from modules import driveDumper
 
-version = "1.2.1"
+version = "2.0.1"
 
 banner = """
 ██████╗ ███████╗██╗     ███████╗ ██████╗  █████╗ ████████╗███████╗
@@ -24,6 +26,10 @@ def main():
     parser.add_argument("-r", "--recipient", required=False, help="Recipient to send email to")
     parser.add_argument("-s", "--subject", required=False, help="Suject for the email to be send")
     parser.add_argument("-c", "--content", required=False, help="Content for the email to be send")
+    parser.add_argument("-t", "--filename", required=False, help="Filename to read/download from Drive")
+    parser.add_argument("-e", "--externalaccount", required=False, help="External account to give access to the document (Editor role)")
+
+
     
     args = parser.parse_args()
 
@@ -46,14 +52,17 @@ def main():
     # Drive plugin
     elif args.mode == "drive" and args.action == "list":
         driveDumper.listFiles(args.service_account_key, args.impersonate)
-    elif args.mode == "drive" and args.action == "download":
-        driveDumper.downloadFiles(args.service_account_key, args.impersonate)
     elif args.mode == "drive" and args.action == "folders":
         driveDumper.listFolders(args.service_account_key, args.impersonate)
-    elif args.mode == "drive" and args.action == "list" and args.action == "folders":
-        driveDumper.listFilesinFolders(args.service_account_key, args.impersonate)
-    elif args.mode == "drive" and args.action == "list" and args.action == "folders":
-        driveDumper.listFilesinFolders(args.service_account_key, args.impersonate)    
+    elif args.mode == "drive" and args.action == "download" and args.filename:
+        driveDumper.downloadFiles(args.service_account_key, args.impersonate, args.filename)
+    
+    
+    elif args.mode == "drive" and args.action == "upload":
+        driveDumper.uploadFiles(args.service_account_key, args.impersonate)     
+    elif args.mode == "drive" and args.action == "permissions" and args.externalaccount and args.filename:
+        driveDumper.modifyPermissions(args.service_account_key, args.impersonate, args.externalaccount, args.filename) 
+        
     else:
         print("Invalid mode selected. Choose 'gmail' or 'drive'.")
 

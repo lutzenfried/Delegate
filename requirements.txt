@@ -1,0 +1,4 @@
+google-auth
+google-api-python-client
+bs4
+datetime
