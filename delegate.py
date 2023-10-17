@@ -4,7 +4,7 @@ import argparse
 from modules import gmailDumper
 from modules import driveDumper
 
-version = "2.0.1"
+version = "2.1.0"
 
 banner = """
 ██████╗ ███████╗██╗     ███████╗ ██████╗  █████╗ ████████╗███████╗
@@ -27,9 +27,8 @@ def main():
     parser.add_argument("-s", "--subject", required=False, help="Suject for the email to be send")
     parser.add_argument("-c", "--content", required=False, help="Content for the email to be send")
     parser.add_argument("-t", "--filename", required=False, help="Filename to read/download from Drive")
-    parser.add_argument("-e", "--externalaccount", required=False, help="External account to give access to the document (Editor role)")
-
-
+    parser.add_argument("-e", "--externalaccount", required=False, help="External account to give access to the document (Writer permission)")
+    parser.add_argument("-p", "--filepath", required=False, help="Filepath and filename to upload within Drive. /home/user/malwawre.exe")
     
     args = parser.parse_args()
 
@@ -56,10 +55,8 @@ def main():
         driveDumper.listFolders(args.service_account_key, args.impersonate)
     elif args.mode == "drive" and args.action == "download" and args.filename:
         driveDumper.downloadFiles(args.service_account_key, args.impersonate, args.filename)
-    
-    
-    elif args.mode == "drive" and args.action == "upload":
-        driveDumper.uploadFiles(args.service_account_key, args.impersonate)     
+    elif args.mode == "drive" and args.action == "upload" and args.impersonate and args.filename and args.filepath:
+        driveDumper.uploadFiles(args.service_account_key, args.impersonate, args.filename, args.filepath, args.folder)     
     elif args.mode == "drive" and args.action == "permissions" and args.externalaccount and args.filename:
         driveDumper.modifyPermissions(args.service_account_key, args.impersonate, args.externalaccount, args.filename) 
         

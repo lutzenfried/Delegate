@@ -4,6 +4,7 @@ import json
 from google.oauth2 import service_account
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaFileUpload
 from pprint import pprint
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
@@ -84,6 +85,21 @@ def file_id_by_name(service_account_key, impersonate, filename):
     else:
         return None
 
+def folder_id_by_name(service_account_key, impersonate, foldername):
+    try:
+        folder_query = f"name='{foldername}' and mimeType='application/vnd.google-apps.folder'"
+        gdrive_service = get_gdrive_service(service_account_key, impersonate)
+        results = gdrive_service.files().list(q=folder_query, fields="files(id)").execute()
+        files = results.get('files', [])
+        if files:
+            return files[0]['id']
+        else:
+            return None
+        
+    except Exception as e:
+        print(f"An error occurred while getting folder ID: {e}")
+        return None
+
 def downloadFiles(service_account_key, impersonate, filename):
         gdrive_service = get_gdrive_service(service_account_key, impersonate)
         file_id = file_id_by_name(service_account_key, impersonate, filename)
@@ -130,8 +146,23 @@ def downloadFiles(service_account_key, impersonate, filename):
         except Exception as e:
                 print(f"An error occurred: {e}")
     
-def uploadFiles(service_account_key, impersonate):
+def uploadFiles(service_account_key, impersonate, filepath, filename, foldername=None):
     gdrive_service = get_gdrive_service(service_account_key, impersonate)
+    try:
+        media_body = MediaFileUpload(filepath, resumable=True)
+        file_metadata = {'name': filename}
+        
+        if foldername:
+            parent_folder_id = folder_id_by_name(service_account_key, impersonate, foldername)
+            if parent_folder_id:
+                file_metadata['parents'] = [parent_folder_id]
+
+        uploaded_file = gdrive_service.files().create(body=file_metadata, media_body=media_body).execute()
+
+        print(f"File '{filename}' uploaded successfully with ID: {uploaded_file['id']}")
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 def modifyPermissions(service_account_key, impersonate, externalaccount, filename): 
     file_id = file_id_by_name(service_account_key, impersonate, filename)
