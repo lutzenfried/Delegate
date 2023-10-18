@@ -1,6 +1,8 @@
 # Delegate
 Tool to perform GCP Domain Wide Delegation abuse and access Gmail and Drive data from a compromised Service Account with domain wide delegation permissions configured within Google Workspace.
 
+--> [Domain Wide Delegation article](https://medium.com/@lutzenfried/gcp-domain-wide-delegation-abuses-b82b8dd8cf15)
+
 <img src="./Images/DomainWideDelegation_GCP.png" alt="gcpdelegation" width="800"/>
 
 ## Delegate tool usage
