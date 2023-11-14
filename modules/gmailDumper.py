@@ -51,28 +51,28 @@ def readEmails(service_account_key, impersonate):
         # Get value of 'payload' from dictionary 'txt'
         payload = txt['payload']
         headers = payload['headers']
-    
+
         # Look for Subject and Sender Email in the headers
         for d in headers:
             if d['name'] == 'Subject':
                 subject = d['value']
             if d['name'] == 'From':
                 sender = d['value']
-    
+
         # The Body of the message is in Encrypted format. So, we have to decode it.
         # Get the data and decode it with base 64 decoder.
         parts = payload.get('parts')[0]
         try:
             data = parts['body']['data']
-        except:
+        except Exception:
             continue
         data = data.replace("-","+").replace("_","/")
         decoded_data = base64.b64decode(data)
-        
+
         # Now, the data obtained is in lxml. So, we will parse it with BeautifulSoup library
         soup = BeautifulSoup(decoded_data , "lxml")
         body = soup.body()
-        
+
         # Printing the subject, sender's email and message
         print("Subject: ", subject)
         print("From: ", sender)
@@ -106,35 +106,31 @@ def listFolders(service_account_key, impersonate):
     gmail_service = get_gmail_service(service_account_key, impersonate)
     results = gmail_service.users().labels().list(userId='me').execute()
 
-    labels = results.get('labels', [])
-
-    if not labels:
-        print("No labels (folders) found in Gmail.")
-    else:
+    if labels := results.get('labels', []):
         print("Labels (folders) in Gmail:")
         for label in labels:
             print(f"Label Name: {label['name']}")
+
+    else:
+        print("No labels (folders) found in Gmail.")
             
 def listEmailFromLabel(service_account_key, impersonate, labelName):
     gmail_service = get_gmail_service(service_account_key, impersonate)
     label = gmail_service.users().labels().list(userId='me').execute()
-    label_id = None
-    for l in label['labels']:
-        if l['name'] == labelName:
-            label_id = l['id']
-            break
-
+    label_id = next(
+        (l['id'] for l in label['labels'] if l['name'] == labelName), None
+    )
     if label_id is None:
         print(f"Label '{labelName}' not found.")
         return
-    
+
     results = gmail_service.users().messages().list(userId='me', labelIds=[label_id], maxResults=200).execute()
     messages = results.get('messages')
     for msg in messages:
         # Get the message from its id
         print("\n======================= Gmail Message id: " + str(msg['id']) + "  =======================")
         txt = gmail_service.users().messages().get(userId='me', id=msg['id']).execute()
-        
+
         payload = txt['payload']
         headers = payload['headers']
         # Look for Subject and Sender Email in the headers
@@ -143,7 +139,7 @@ def listEmailFromLabel(service_account_key, impersonate, labelName):
                 subject = d['value']
             if d['name'] == 'From':
                 sender = d['value']
-        
+
         # Printing the subject, sender's email and message
         print("Subject: ", subject)
         print("From: ", sender)
@@ -151,19 +147,16 @@ def listEmailFromLabel(service_account_key, impersonate, labelName):
 def readFromLabel(service_account_key, impersonate, labelName):
     gmail_service = get_gmail_service(service_account_key, impersonate)
     label = gmail_service.users().labels().list(userId='me').execute()
-    label_id = None
-    for l in label['labels']:
-        if l['name'] == labelName:
-            label_id = l['id']
-            break
-
+    label_id = next(
+        (l['id'] for l in label['labels'] if l['name'] == labelName), None
+    )
     if label_id is None:
         print(f"Label '{labelName}' not found.")
         return
 
     # Fetch emails from the specified label
     results = gmail_service.users().messages().list(userId='me', labelIds=[label_id], maxResults=200).execute()
-    
+
     messages = results.get('messages', [])
 
     if not messages:
@@ -207,14 +200,15 @@ def sendEmail(service_account_key, impersonate, recipient, subject, content):
         print(f"Email sending failed: {e}")
 
 def create_message(sender, to, subject, message_text):
-    message = {
+    return {
         'to': to,
         'subject': subject,
         'raw': base64.urlsafe_b64encode(
-            f"From: {sender}\nTo: {to}\nSubject: {subject}\n\n{message_text}".encode("utf-8")
-        ).decode("utf-8")
+            f"From: {sender}\nTo: {to}\nSubject: {subject}\n\n{message_text}".encode(
+                "utf-8"
+            )
+        ).decode("utf-8"),
     }
-    return message
 
 def save_attachment(filename, file_data):
     with open(filename, 'wb') as f:
@@ -224,23 +218,22 @@ def save_attachment(filename, file_data):
 def downloadAttachments(service_account_key, impersonate):
     
     # This will download all attachments from the last 200 Gmail emails
-    gmail_service = get_gmail_service(service_account_key, impersonate) 
+    gmail_service = get_gmail_service(service_account_key, impersonate)
     results = gmail_service.users().messages().list(userId='me', maxResults=200).execute()
-    messages = results.get('messages', [])
-
-    if not messages:
-        print("No emails found in Gmail.")
-    else:
+    if messages := results.get('messages', []):
         for message in messages:
             message_data = gmail_service.users().messages().get(userId='me', id=message['id']).execute()
             if 'parts' in message_data['payload']:
                 for part in message_data['payload']['parts']:
                     if 'filename' in part:
                         filename = part['filename']
-                        attachment_id = part['body'].get('attachmentId', None)  # Handle emails without attachmentId
-                        if attachment_id:
+                        if attachment_id := part['body'].get(
+                            'attachmentId', None
+                        ):
                             attachment = gmail_service.users().messages().attachments().get(
                             userId='me', messageId=message_data['id'], id=attachment_id).execute()
                             file_data = base64.urlsafe_b64decode(attachment['data'].encode('UTF-8'))
                             print(f"+++ Found attachment : {filename}")
                             save_attachment(filename, file_data)
+    else:
+        print("No emails found in Gmail.")
