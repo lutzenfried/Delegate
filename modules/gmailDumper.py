@@ -3,23 +3,24 @@
 import json
 from google.oauth2 import service_account
 from googleapiclient import discovery
+from googleapiclient.errors import HttpError
 from pprint import pprint
 from bs4 import BeautifulSoup 
 import base64
 from datetime import datetime
 
-
-# This can be any Gooogle service scope the domain wide delegation have been granted for.
-SCOPES = ["https://mail.google.com/"]
+# This can be any Google service scope the domain wide delegation have been granted for.
+SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 def get_gmail_service(service_account_key, impersonate):
-
     service_creds = None
     with open(service_account_key, "r") as f:
         service_creds = json.load(f)
 
     # Setup the creds by assigning the specific GSuite scope
-    credentials = service_account.Credentials.from_service_account_info(service_creds, scopes=SCOPES)
+    credentials = service_account.Credentials.from_service_account_info(
+        service_creds, scopes=SCOPES
+    )
 
     # Perform delegation and retrieve credentials of the delegated user
     delegated_credentials = None
@@ -31,7 +32,7 @@ def get_gmail_service(service_account_key, impersonate):
         try:
             service = discovery.build("gmail", "v1", credentials=delegated_credentials)
         except Exception:
-            print("Error testing API access using delegated credentials " 'for "%s"', email)
+            print("Error testing API access using delegated credentials " 'for "%s"', impersonate)
     return service
 
 def readEmails(service_account_key, impersonate):
@@ -171,15 +172,15 @@ def readFromLabel(service_account_key, impersonate, labelName):
     else:
         for message in messages:
             message_data = gmail_service.users().messages().get(userId='me', id=message['id']).execute()
-            subject = message_data.get('subject', 'No Subject')  # Handle missing 'subject'
-            sender = message_data.get('from', 'Unknown Sender')  # Handle missing 'from'
-            timestamp = int(message_data['internalDate']) / 1000  # Convert to seconds
+            subject = message_data.get('subject', 'No Subject')
+            sender = message_data.get('from', 'Unknown Sender')
+            timestamp = int(message_data['internalDate']) / 1000
             date_time = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
             print(f"Subject: {subject}")
             print(f"From: {sender}")
-            print(f"Date: {date_time}")  # Display human-readable date and time
+            print(f"Date: {date_time}")
             print("Message Body:")
-            print(message_data['snippet'])  # Display a snippet of the email body
+            print(message_data['snippet'])
 
 def send_message(service, user_id, message):
     try:
@@ -191,18 +192,14 @@ def send_message(service, user_id, message):
 def sendEmail(service_account_key, impersonate, recipient, subject, content):
     gmail_service = get_gmail_service(service_account_key, impersonate)
 
-    recipient_email = recipient  # Replace with the recipient's email address
-    subject = 'Test Email'
-    message_body = 'This is a test email sent using the Gmail API.'
-
     try:
         # Create the email message
-        message = create_message('me', recipient_email, subject, content)
+        message = create_message('me', recipient, subject, content)
 
         # Send the email
         send_message(gmail_service, 'me', message)
 
-        print(f"===> Email sent to {recipient_email} successfully.\n")
+        print(f"===> Email sent to {recipient} successfully.\n")
     except HttpError as e:
         print(f"Email sending failed: {e}")
 
@@ -237,7 +234,7 @@ def downloadAttachments(service_account_key, impersonate):
                 for part in message_data['payload']['parts']:
                     if 'filename' in part:
                         filename = part['filename']
-                        attachment_id = part['body'].get('attachmentId', None)  # Handle emails without attachmentId
+                        attachment_id = part['body'].get('attachmentId', None)
                         if attachment_id:
                             attachment = gmail_service.users().messages().attachments().get(
                             userId='me', messageId=message_data['id'], id=attachment_id).execute()
