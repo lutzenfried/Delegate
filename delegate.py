@@ -10,6 +10,7 @@ import sys
 from modules.gmailDumper import *
 from modules.driveDumper import *
 from modules.chatInteract import *
+from modules.calendarDumper import *
 
 def print_banner():
     version = "3.1.0" # Version updated for the new feature
@@ -35,10 +36,15 @@ def main():
     parser.add_argument('-k', '--key', required=True, help='Service Account Key JSON file path')
     parser.add_argument('-i', '--impersonate', required=True, help='Email address to impersonate')
     parser.add_argument('-m', '--module', required=True, 
-                       choices=['gmail', 'drive', 'chat'],
+                       choices=['gmail', 'drive', 'calendar', 'chat'],
                        help='Module to use')
     parser.add_argument('-a', '--action', required=True, help='Action to perform')
     
+    # Module-specific arguments
+    parser.add_argument('--calendar-id', help='Calendar ID (default: primary)')
+    parser.add_argument('--event-id', help='Event ID for calendar operations')
+    # NEW ARGUMENT ADDED
+    parser.add_argument('--time-ago', help="Time period for past events (e.g., '30d', '4w', '2m')")
     parser.add_argument('--space-id', help='Space ID for chat operations')
     parser.add_argument('--thread-id', help='Thread ID for chat operations')
     parser.add_argument('--filename', help='Filename for file operations')
@@ -49,6 +55,11 @@ def main():
     parser.add_argument('--subject', help='Email subject')
     parser.add_argument('--content', help='Email/message content')
     parser.add_argument('--text', help='Message text for chat')
+    parser.add_argument('--summary', help='Calendar event summary')
+    parser.add_argument('--description', help='Event/space description')
+    parser.add_argument('--start-time', help='Event start time (ISO format)')
+    parser.add_argument('--end-time', help='Event end time (ISO format)')
+    parser.add_argument('--location', help='Event location')
     parser.add_argument('--attendees', help='Comma-separated list of attendee emails')
     parser.add_argument('--external-account', help='External account for permissions')
     parser.add_argument('--max-results', type=int, default=100, help='Maximum results to return')
@@ -113,6 +124,43 @@ def main():
             modifyPermissions(args.key, args.impersonate, args.external_account, args.filename)
         else:
             print(f"[!] Action inconnue pour le module drive : {args.action}")
+    
+    # Calendar Module
+    elif args.module == 'calendar':
+        calendar_id = args.calendar_id if args.calendar_id else 'primary'
+        
+        if args.action == 'listCalendars':
+            listCalendars(args.key, args.impersonate)
+        elif args.action == 'listEvents':
+            listEvents(args.key, args.impersonate, calendar_id, args.max_results)
+        # NEW ACTION ADDED
+        elif args.action == 'listPastEvents':
+            if not args.time_ago:
+                print("[!] The --time-ago argument is required for this action (e.g., '30d', '4w')")
+                sys.exit(1)
+            listPastEvents(args.key, args.impersonate, args.time_ago, calendar_id, args.max_results)
+        elif args.action == 'getEventDetails':
+            if not args.event_id:
+                print("[!] --event-id required for this action")
+                sys.exit(1)
+            getEventDetails(args.key, args.impersonate, calendar_id, args.event_id)
+        elif args.action == 'getAttendees':
+            if not args.event_id:
+                print("[!] --event-id required for this action")
+                sys.exit(1)
+            getAttendees(args.key, args.impersonate, calendar_id, args.event_id)
+        elif args.action == 'createEvent':
+            if not all([args.summary, args.start_time, args.end_time]):
+                print("[!] --summary, --start-time, and --end-time required")
+                sys.exit(1)
+            attendees = args.attendees.split(',') if args.attendees else []
+            createEvent(args.key, args.impersonate, calendar_id, args.summary, 
+                       args.description or '', args.start_time, args.end_time,
+                       args.location or '', attendees)
+        elif args.action == 'listMeetingRecordings':
+            listMeetingRecordings(args.key, args.impersonate, calendar_id, args.max_results)
+        else:
+            print(f"[!] Unknown action for calendar: {args.action}")
     
     # Chat Module
     elif args.module == 'chat':
